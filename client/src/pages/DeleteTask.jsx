@@ -1,7 +1,12 @@
 import React from "react";
+import Navigation from "./Navigation";
 
 const DeleteTask = () => {
-  return <div></div>;
+  return (
+    <div>
+      <Navigation />
+    </div>
+  );
 };
 
 export default DeleteTask;

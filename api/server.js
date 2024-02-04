@@ -1,9 +1,13 @@
 const express = require("express");
+const cors = require("cors");
 const ABI = require("./ABI.json");
 const { Web3 } = require("web3");
 
 const app = express();
+
 require("dotenv").config();
+app.use(cors());
+app.use(express.json());
 
 const MUMBAI_URL = process.env.MUMBAI_URL;
 
@@ -18,10 +22,49 @@ const contract = new web3.eth.Contract(ABI, contractAddress);
 // };
 // viewTask();
 
+const dateclashCheck = async (taskDate) => {
+  const tasks = await contract.methods.allTask().call();
+  const foundTask = tasks.find((task) => task.date === taskDate);
+
+  if (foundTask) {
+    return foundTask.name;
+  }
+  return "No Task Found";
+};
+
 app.post("/api/ethereum/create-task", async (req, res) => {
   //   await contract.methods
   //     .createTask("blockchain", "7/23/12")
   //     .send({ from: "0x7061b591CA8A5cfb7197cF091e63273CC5F050aa" });
+  const { taskDate } = req.body;
+  const task = await dateclashCheck(taskDate);
+  try {
+    if (task !== "No Task Found") {
+      res
+        .status(409)
+        .json({ status: 409, message: "Date clash:Task cannot be added" });
+    } else {
+      res.status(200).json({ status: 200, message: "Task can be added" });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+app.post("/api/ethereum/update-task", async (req, res) => {
+  const { taskDate } = req.body;
+  const task = await dateclashCheck(taskDate);
+  try {
+    if (task !== "No Task Found") {
+      res
+        .status(409)
+        .json({ status: 409, message: "Date clash:Task cannot be updated" });
+    } else {
+      res.status(200).json({ status: 200, message: "Task can be updated" });
+    }
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 app.get("/api/ethereum/view-task/:taskId", async (req, res) => {
@@ -43,10 +86,10 @@ app.get("/api/ethereum/view-task/:taskId", async (req, res) => {
 
 app.get("/api/ethereum/view-all-task", async (req, res) => {
   try {
-    const tasks = await contract.methods.allTask().call;
+    const tasks = await contract.methods.allTask().call();
     if (tasks.length < 0) {
       res
-        .status(400)
+        .status(404)
         .json({ status: 404, message: "Task list does not exist" });
     } else {
       const taskList = tasks.map(({ id, name, date }) => {
@@ -55,7 +98,9 @@ app.get("/api/ethereum/view-all-task", async (req, res) => {
       });
       res.status(200).json({ status: 200, taskList, message: "Task Exist" });
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 const PORT = 3000;

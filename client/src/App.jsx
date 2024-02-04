@@ -11,13 +11,23 @@ import Wallet from "./pages/Wallet";
 import "./App.css";
 
 function App() {
+  const [state, setState] = useState({
+    web3: null,
+    contract: null,
+    account: null,
+  });
+
+  const saveState = ({ web3, contract, account }) => {
+    setState({ web3: web3, contract: contract, account: account });
+  };
+
   const router = createBrowserRouter([
-    { path: "/", element: <Wallet /> },
+    { path: "/", element: <Wallet saveState={saveState} /> },
     { path: "/view-all-tasks", element: <ViewAllTasks /> },
-    { path: "/create-task", element: <CreateTask /> },
+    { path: "/create-task", element: <CreateTask state={state} /> },
     { path: "/view-task", element: <ViewTask /> },
-    { path: "/update-task", element: <UpdateTask /> },
-    { path: "/delete-task", element: <DeleteTask /> },
+    { path: "/update-task", element: <UpdateTask state={state} /> },
+    { path: "/delete-task", element: <DeleteTask state={state} /> },
   ]);
 
   return (
